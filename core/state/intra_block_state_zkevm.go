@@ -101,14 +101,14 @@ func (sdb *IntraBlockState) SyncerPreExecuteStateSet(
 	}
 
 	//save block number
-	if chainConfig.IsNormalcy(blockNumber) {
+	if !chainConfig.IsNormalcy(blockNumber) {
 		sdb.scalableSetBlockNum(blockNumber)
 	}
 	emptyHash := libcommon.Hash{}
 
 	//ETROG
 	if chainConfig.IsForkID7Etrog(blockNumber) {
-		if chainConfig.IsNormalcy(blockNumber) {
+		if !chainConfig.IsNormalcy(blockNumber) {
 			currentTimestamp := sdb.ScalableGetTimestamp()
 			if blockTimestamp > currentTimestamp {
 				sdb.ScalableSetTimestamp(blockTimestamp)
