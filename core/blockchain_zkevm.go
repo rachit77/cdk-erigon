@@ -158,26 +158,24 @@ func ExecuteBlockEphemerallyZk(
 	}
 
 	var l2InfoRoot *libcommon.Hash
-	if !chainConfig.IsNormalcy(blockNum) {
-		if chainConfig.IsForkID7Etrog(blockNum) {
-			l2InfoRoot, err = blockinfo.BuildBlockInfoTree(
-				&header.Coinbase,
-				header.Number.Uint64(),
-				header.Time,
-				blockGasLimit,
-				*usedGas,
-				*ger,
-				*l1Blockhash,
-				*prevBlockRoot,
-				&txInfos,
-			)
-			if err != nil {
-				return nil, err
-			}
+	if chainConfig.IsForkID7Etrog(blockNum) {
+		l2InfoRoot, err = blockinfo.BuildBlockInfoTree(
+			&header.Coinbase,
+			header.Number.Uint64(),
+			header.Time,
+			blockGasLimit,
+			*usedGas,
+			*ger,
+			*l1Blockhash,
+			*prevBlockRoot,
+			&txInfos,
+		)
+		if err != nil {
+			return nil, err
 		}
-
-		ibs.PostExecuteStateSet(chainConfig, block.NumberU64(), l2InfoRoot)
 	}
+
+	ibs.PostExecuteStateSet(chainConfig, block.NumberU64(), l2InfoRoot)
 
 	receiptSha := types.DeriveSha(receipts)
 	// [zkevm] todo

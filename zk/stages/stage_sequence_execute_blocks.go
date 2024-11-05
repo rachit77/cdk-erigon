@@ -283,9 +283,7 @@ func postBlockStateHandling(
 		return err
 	}
 
-	if !cfg.chainConfig.IsNormalcy(header.Number.Uint64()) {
-		ibs.PostExecuteStateSet(cfg.chainConfig, header.Number.Uint64(), blockInfoRootHash)
-	}
+	ibs.PostExecuteStateSet(cfg.chainConfig, header.Number.Uint64(), blockInfoRootHash)
 
 	// store a reference to this block info root against the block number
 	return hermezDb.WriteBlockInfoRoot(header.Number.Uint64(), *blockInfoRootHash)
