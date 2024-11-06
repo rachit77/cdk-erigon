@@ -58,8 +58,12 @@ func (sdb *IntraBlockState) GetTxCount() (uint64, error) {
 }
 
 func (sdb *IntraBlockState) PostExecuteStateSet(chainConfig *chain.Config, blockNum uint64, blockInfoRoot *libcommon.Hash) {
+	if chainConfig.IsNormalcy(blockNum) {
+		return
+	}
+
 	//ETROG
-	if chainConfig.IsForkID7Etrog(blockNum) && !chainConfig.IsNormalcy(blockNum) {
+	if chainConfig.IsForkID7Etrog(blockNum) {
 		sdb.scalableSetBlockInfoRoot(blockInfoRoot)
 	}
 }
