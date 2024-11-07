@@ -87,8 +87,11 @@ type Zk struct {
 
 	TxPoolRejectSmartContractDeployments bool
 
-	InitialBatchCfgFile string
-	ACLPrintHistory     int
+	InitialBatchCfgFile            string
+	ACLPrintHistory                int
+	InfoTreeUpdateInterval         time.Duration
+	BadBatches                     []uint64
+	SealBatchImmediatelyOnOverflow bool
 }
 
 var DefaultZkConfig = &Zk{}

@@ -281,7 +281,10 @@ var DefaultFlags = []cli.Flag{
 	&utils.DisableVirtualCounters,
 	&utils.DAUrl,
 	&utils.VirtualCountersSmtReduction,
+	&utils.BadBatches,
 	&utils.InitialBatchCfgFile,
 
 	&utils.ACLPrintHistory,
+	&utils.InfoTreeUpdateInterval,
+	&utils.SealBatchImmediatelyOnOverflow,
 }
