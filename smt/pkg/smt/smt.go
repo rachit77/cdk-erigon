@@ -12,6 +12,8 @@ import (
 
 	"github.com/ledgerwatch/erigon-lib/common"
 
+	"github.com/ledgerwatch/erigon/core/state"
+	"github.com/ledgerwatch/erigon/core/types"
 	"github.com/ledgerwatch/erigon/smt/pkg/db"
 	"github.com/ledgerwatch/erigon/smt/pkg/utils"
 	"github.com/ledgerwatch/log/v3"
@@ -817,4 +819,39 @@ func (s *SMT) insertHashNode(path []int, hash [4]uint64, root utils.NodeKey) (ut
 	}
 
 	return s.hashcalcAndSave(newIn, utils.BranchCapacity)
+}
+
+func TrimSMTWithReadList(ctx context.Context, s *SMT, readList types.TxnInfo) (*SMT, error) {
+
+	// Step 1: Create a retain list based on readList
+	// Initialize a TrieDbState based on readList
+	tds := state.NewTrieDbState(common.Hash{}, nil, 0, nil)
+
+	// Step 2: Create a retain list from TrieDbState
+	rl, err := tds.ResolveSMTRetainList()
+	if err != nil {
+		return nil, err
+	}
+
+	// step 3: create a witness from smt using trie.RetainDecider
+	witness, err := BuildWitness(s, rl, ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	// step 4: convert witness back to SMT and return
+	trimmedSMT, err := BuildSMTfromWitness(witness)
+	if err != nil {
+		return nil, err
+	}
+
+	// step 5: Verify if the state root of the trimmed SMT matches the original SMT
+	originalRoot := s.LastRoot()
+	trimmedRoot := trimmedSMT.LastRoot()
+
+	if originalRoot.Cmp(trimmedRoot) != 0 {
+		return nil, errors.New("trimmed SMT state root does not match original SMT state root")
+	}
+
+	return trimmedSMT, nil
 }
