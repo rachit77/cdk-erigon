@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/ledgerwatch/erigon-lib/common"
+	libcommon "github.com/ledgerwatch/erigon-lib/common"
 
 	"github.com/ledgerwatch/erigon/core/state"
 	"github.com/ledgerwatch/erigon/core/types"
@@ -825,7 +826,27 @@ func TrimSMTWithReadList(ctx context.Context, s *SMT, readList types.TxnInfo) (*
 
 	// Step 1: Create a retain list based on readList
 	// Initialize a TrieDbState based on readList
-	tds := state.NewTrieDbState(common.Hash{}, nil, 0, nil)
+	tds := state.NewTrieDbState(libcommon.Hash{}, nil, 0, state.NewPlainStateReader(nil))
+
+	for addr, txnTrace := range readList.Traces {
+		if txnTrace.Balance != nil || txnTrace.Nonce != nil {
+			tds.ReadAccountData(addr)
+		}
+
+		for _, storageRead := range txnTrace.StorageRead {
+			keyHash := common.BytesToHash(storageRead.Bytes())
+			tds.ReadAccountStorage(addr, uint64(0), &keyHash)
+		}
+
+		for _, storageKey := range txnTrace.StorageWritten {
+			keyHash := common.BytesToHash(storageKey.Bytes())
+			tds.ReadAccountStorage(addr, uint64(0), &keyHash)
+		}
+
+		if txnTrace.SelfDestructed != nil && *txnTrace.SelfDestructed {
+			tds.ReadAccountData(addr)
+		}
+	}
 
 	// Step 2: Create a retain list from TrieDbState
 	rl, err := tds.ResolveSMTRetainList()

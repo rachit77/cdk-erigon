@@ -12,6 +12,7 @@ import (
 	libcommon "github.com/ledgerwatch/erigon-lib/common"
 	"github.com/ledgerwatch/erigon-lib/kv/memdb"
 	"github.com/ledgerwatch/erigon/core/state"
+	"github.com/ledgerwatch/erigon/core/types"
 	"github.com/ledgerwatch/erigon/smt/pkg/db"
 	"github.com/ledgerwatch/erigon/smt/pkg/smt"
 	"github.com/ledgerwatch/erigon/smt/pkg/utils"
@@ -237,4 +238,30 @@ func TestWitnessToSMTStateReader(t *testing.T) {
 
 	// assert that the storage value is the same
 	require.Equal(t, expectedStorageValue, newStorageValue)
+}
+
+func TestTrimSMTWithReadList(t *testing.T) {
+	ctx := context.Background()
+	smtTrie, _ := prepareSMT(t)
+
+	readList := types.TxnInfo{
+		Traces: map[libcommon.Address]*types.TxnTrace{
+			libcommon.HexToAddress("0x71dd1027069078091B3ca48093B00E4735B20624"): {
+				Balance: uint256.NewInt(1000000000),
+				StorageRead: []libcommon.Hash{
+					libcommon.HexToHash("0x5"),
+				},
+				StorageWritten: map[libcommon.Hash]*uint256.Int{
+					libcommon.HexToHash("0x5"): uint256.NewInt(0xdeadbeef),
+				},
+			},
+		},
+	}
+
+	trimmedSMT, err := smt.TrimSMTWithReadList(ctx, smtTrie, readList)
+	require.NoError(t, err, "error trimming SMT")
+
+	originalRoot := smtTrie.LastRoot()
+	trimmedRoot := trimmedSMT.LastRoot()
+	require.Equal(t, 0, originalRoot.Cmp(trimmedRoot), "trimmed SMT state root does not match original SMT state root")
 }
